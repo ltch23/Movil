@@ -5,82 +5,112 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
-import android.os.PowerManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
+import android.view.Surface;
+import android.view.Window;
+import android.view.WindowManager;
+import android.widget.ImageView;
 import android.widget.TextView;
+
+import java.io.File;
 
 public class DetalleSensor extends AppCompatActivity implements  SensorEventListener{
 
     float last_x, last_y, last_z;
     String text="";
     SensorManager sensorManager;
-    Sensor sensor;
-    TextView textView;
+    Sensor m_sensor;
+    TextView mview;
+    Luis luis;
+
+    private WindowManager mWindowManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_detalle_sensor);
+
+//        this.getActionBar().hide();
 
         Intent intent = getIntent();
-        int sensorType = Integer.parseInt(intent.getStringExtra("SENSOR_TYPE"));
+        String sensorName = intent.getStringExtra("SENSOR_TYPE");
+        mview=findViewById(R.id.textView);
+        text=sensorName;
 
-        textView = (TextView) findViewById(R.id.textView);
-        sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
-        sensor = sensorManager.getDefaultSensor(sensorType);
-
-        sensorManager.registerListener(this, sensor, SensorManager.SENSOR_DELAY_NORMAL);
+//        setContentView(R.layout.activity_detalle_sensor);
 
 
-        text = text.concat(sensor.getName());
-    //    text = text.concat(String.valueOf(sensor.getType()) + " ");
-     //   text = text.concat(sensor.getVendor() + " ");
-        //
 
-        //textView.setText(text);
+        if (sensorName.equals("Proximidad")) {
+          setContentView(R.layout.activity_detalle_sensor);
+            sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
+            m_sensor = sensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY);
+        }
 
+        if (sensorName.equals("Orientacion")) {
 
+//            getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
+//            this.supportRequestWindowFeature(Window.FEATURE_NO_TITLE);
+
+            luis= new Luis(this);
+            setContentView(luis);
+
+            sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
+            m_sensor = sensorManager.getDefaultSensor(Sensor.TYPE_ORIENTATION);
+
+            Log.d("Compass", "onCreated");
+
+        }
+
+        if (sensorName.equals("Acelerometro")) {
+            sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
+            m_sensor = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        }
+
+        sensorManager.registerListener(this, m_sensor, SensorManager.SENSOR_DELAY_NORMAL);
+
+//        mview.setText(text);
     }
 
 
     @Override
     public void onSensorChanged(SensorEvent event) {
 
-        float x = event.values[0];
-        float y = event.values[1];
-        float z = event.values[2];
 
-        text = text.concat("x: ");
-        text = text.concat(String.valueOf(x));
+        switch (event.sensor.getType()) {
 
-        text = text.concat(" y: ");
-        text = text.concat(String.valueOf(y));
+            case Sensor.TYPE_PROXIMITY:
 
-        text = text.concat(" z: ");
-        text = text.concat(String.valueOf(z));
+                ImageView myImage = (ImageView) findViewById(R.id.imageView);
+                // mview.setText("x:" + Float.toString(event.values[0]));
 
+                if (event.values[0] < event.sensor.getMaximumRange()) {
+                    myImage.setImageResource(R.drawable.goku2);
+                } else {
+                    myImage.setImageResource(R.drawable.goku3);
+                }
 
-        textView.setText(text);
+                break;
 
+            case Sensor.TYPE_ORIENTATION:
 
+                int orientation = (int) event.values[0]; //
+                Log.d("Compass", "Got sensor event: " + event.values[0]);
+                luis.setDirection(orientation);
 
-        /*
+                break;
 
-        text = text.concat(String.valueOf(x)+"\n");
-        text = text.concat(String.valueOf(y)+"\n");
-        text = text.concat(String.valueOf(z)+"\n");
-        );
-
-   //     textView.setText(text);
-   */
+        }
     }
-
 
     @Override
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
 
     }
+
+
+
 
 
 }
